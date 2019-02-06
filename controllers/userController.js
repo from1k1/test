@@ -17,7 +17,14 @@ exports.signinpost = function(req,res,next){
 			const login = req.body.login;
 			const pass = req.body.password;
 			signinUser(login,pass).then(result=>{
-				res.redirect(301, `http://localhost:3000/redirect.html?id=${result.id}&token=${result.token}`);
+				if (result.token ==="nothing"){
+					res.send({
+						success:false,
+						message:"Wrong username or password"
+					})
+				}else{
+					res.redirect(301, `http://localhost:3000/redirect.html?id=${result.id}&token=${result.token}`);
+				}
 			});
 		}else{
 			res.send({
@@ -103,6 +110,7 @@ function addUser(login,password,picture){
 async function signinUser(login,password){
 	const rows = await query(`SELECT \`id\` FROM \`users\` WHERE \`login\` = '${login}' AND  \`password\`= '${password}'`);
 	const userId = Object.assign({},rows[0]).id;
+	if (userId){
 	console.log("User ID: " + userId);
 	var token = jwt.sign({ id: userId,login:login }, "SUPADUPASECRET", {
       expiresIn: 86400 // expires in 24 hours
@@ -116,6 +124,13 @@ async function signinUser(login,password){
 	return {
 		id: userId,
 		token: token
+	}
+		
+	}else{
+		return{
+			id: 0,
+			token: "nothing"
+		}
 	}
 }
 
